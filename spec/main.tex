@@ -124,7 +124,7 @@
 We provide a specification for our implementation of the CGGMP threshold signing protocol~\cite{cggmp24}. 
 
 \section{Notation and Preliminaries}
-$\E$ denotes an elliptic-curve group of prime order\footnote{The curve order is denoted by {\tt curve}\_{\tt order} in the code. Note that $q$ is also used for the verifier's challenge space in~\cite{cggmp24}, but we use $Q$ for that instead.}~$q$ with generator $G$. %(Note we write $\E$ additively, whereas multiplicative notation is used in~\cite{cggmp24}.) 
+$\E$ denotes an elliptic-curve group of prime order\footnote{The curve order is denoted by {\tt curve}\_{\tt order} in the code.}~$q$ with generator $G$. %(Note we write $\E$ additively, whereas multiplicative notation is used in~\cite{cggmp24}.)
 If $P \in \E$ is a point on the curve, then $\affineX{P}$ denotes the $x$-coordinate of~$P$. We let $\Z_n=[n]=\{0, \dots, n-1\}$, and let $\Z_n^*$ be the subset of elements of~$\Z_n$ co-prime to~$n$, i.e., $\Z^*_n=\{i \mid i \in \Z_n \land \gcd(i, n) = 1\}$. 
 For integers $a, b, \ell$, we set 
 $[a; b)=\{a, \ldots, b-1\}$,
@@ -324,7 +324,7 @@ Assuming $B$ is a power of~2, the exponentiation in line~3 requires $\lg B$ squa
 The protocol relies on several user-defined parameters that determine its security. Note  these do not include the curve order~$q$, which is fixed by the underlying signature scheme  rather than by the threshold protocol itself.
 We let $\lambda$ denote the bit length of the curve order (so $2^\lambda \leq q < 2^{\lambda+1}$) and assume $\lambda\geq 256$ (which is the case for the signature schemes we support).
 
-The security parameters of the protocol are denoted collectively by $L = (\kappa, \varepsilon, \ell, \ell', m, Q)$. 
+The security parameters of the protocol are denoted collectively by $L = (\kappa, \varepsilon, \ell, \ell', m)$.
 These parameters are used in the following ways:
 \begin{itemize}
     \item $\kappa$ is set to $\log_2 q$, bit-length of curve prime order. E.g. for secp256k1, $\kappa = 256$.
@@ -339,9 +339,8 @@ These parameters are used in the following ways:
 \end{itemize}
 For correctness, we require
 $\ell \geq \lambda$,
-    $\epsilon \geq 8 + \log Q$, and
+    $\epsilon \geq 8 + \log q$, and
     $\ell' \leq 8\kappa$.
-We also recommend $Q=2^m$ since it can only hurt efficiency (while not improving security) otherwise. %(We could even hardcode this, and allow the user to set~$m$ but not~$Q$.)
 
 \subsubsection{Security Guidelines}
 Let $s\leq 256$ be a statistical security parameter, so the goal is to achieve roughly $2^{-s}$ 
@@ -355,13 +354,12 @@ Parameters can be set using the following guidelines:
     \item $\ell$ needs to be set such that $2^{\ell+1}\geq q$; setting $\ell \geq \lambda$ ensures this.
 Some of the zero-knowledge proofs have privacy loss and soundness error at least~$2^{-\ell}$, but since $\ell = \lambda \geq s$ that is fine.
     
-    \item $Q$ and $m$ determine the soundness error of several of the zero-knowledge proofs, with some of the proofs having soundness error at least~$1/Q$ and others having soundness error at least~$2^{-m}$. It thus makes sense to set $Q=2^m$ (as recommended above).    
-    Setting $Q=2^{128}$ (and $m=128$) suffices for 128-bit security.  {\bf Note:} while it is possible to increase $Q$ without any significant direct impact on efficiency, increasing $Q$ requires increasing $\epsilon, \ell'$, which does impact efficiency. 
+    \item The curve order $q$ and parameter $m$ determine the soundness error of several of the zero-knowledge proofs, with some of the proofs having soundness error at least~$1/q$ and others having soundness error at least~$2^{-m}$.
+    For 128-bit security, using a curve with $\lambda \geq 256$ and setting $m=128$ suffices.
     
     \item $\epsilon$ affects both the completeness error and the privacy loss of several of the zero-knowledge proofs. 
-    %For correctness, we minimally require $\epsilon \geq 2+\log Q$. Moreover, 
     Since 
-    some proofs have privacy loss at least~$4Q/2^\epsilon$, this requires $\epsilon \geq 2+s+\log Q$.
+    some proofs have privacy loss at least~$4q/2^\epsilon$, this requires $\epsilon \geq 2+s+\log q$.
 
     \item $\ell'$ needs to be set large enough so that adding noise from $\pm 2^{\ell'}$ statistically hides a $(2\lambda+\epsilon)$-bit value. This requires $\ell' \geq 2\lambda + \epsilon + s$.
 \end{itemize}
@@ -548,7 +546,7 @@ In all the cases where this proof is used in the protocol, the prover knows the 
 \begin{inlineAlgorithm}
 \algoName{$\proveni{enc}^L(\state, R_j, (N_i, K); k, \rho[, \sk_i]) \to ((S, A, C); (z_1, z_2, z_3))$}
 \algoInputsList{
-    \item security level $L = (Q, \dots)$,
+    \item security level $L$,
     \item shared state $\state \in \Byte^*$,
     \item auxilary data $R_j$,
     \item public encryption key $N_i \in \Z$ and, if known, corresponding secret key $\sk_i$,
@@ -573,7 +571,7 @@ In all the cases where this proof is used in the protocol, the prover knows the 
 \begin{inlineAlgorithm}
 \algoName{$\verifyni{enc}^L(\state, R_j, (N_i, K), ((S, A, C), (z_1, z_2, z_3)))$}
 \algoInputsList{
-    \item security level $L = (Q, \dots)$,
+    \item security level $L$,
     \item shared state $\state \in \Byte^*$,
     \item auxilary data $R_j$,
     \item public data:
